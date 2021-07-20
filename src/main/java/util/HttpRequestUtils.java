@@ -1,11 +1,13 @@
 package util;
 
+import java.io.BufferedReader;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
 
 public class HttpRequestUtils {
     /**
@@ -51,6 +53,18 @@ public class HttpRequestUtils {
 
     public static Pair parseHeader(String header) {
         return getKeyValue(header, ": ");
+    }
+
+    public static String parseUrlPath(BufferedReader br) throws Exception {
+        while (true) {
+            String curLine = br.readLine();
+            if ("".equals(curLine) || curLine == null) break;
+
+            if (StringUtils.startsWith(curLine,"GET")) {
+                return curLine.split(" ")[1];
+            }
+        }
+        return "";
     }
 
     public static class Pair {
