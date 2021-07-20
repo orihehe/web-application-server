@@ -1,7 +1,9 @@
 package util;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,18 @@ public class HttpRequestUtils {
      */
     public static Map<String, String> parseCookies(String cookies) {
         return parseValues(cookies, ";");
+    }
+
+    public static Map<String, String> parseHeader(BufferedReader br) throws IOException {
+        Map<String, String> header = new HashMap<>();
+        while (true) {
+            String curLine = br.readLine();
+            if ("".equals(curLine) || curLine == null) break;
+
+            String[] str = curLine.split(": ");
+            header.put(str[0], str[1]);
+        }
+        return header;
     }
 
     private static Map<String, String> parseValues(String values, String separator) {
@@ -53,18 +67,6 @@ public class HttpRequestUtils {
 
     public static Pair parseHeader(String header) {
         return getKeyValue(header, ": ");
-    }
-
-    public static String parseUrlPath(BufferedReader br) throws Exception {
-        while (true) {
-            String curLine = br.readLine();
-            if ("".equals(curLine) || curLine == null) break;
-
-            if (StringUtils.startsWith(curLine,"GET")) {
-                return curLine.split(" ")[1];
-            }
-        }
-        return "";
     }
 
     public static class Pair {

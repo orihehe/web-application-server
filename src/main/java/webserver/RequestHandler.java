@@ -5,10 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.UserService;
 import util.HttpRequestUtils;
+import util.IOUtils;
 
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.Map;
+import java.util.Optional;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -29,22 +32,26 @@ public class RequestHandler extends Thread {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
 
             BufferedReader br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-            String urlPath = HttpRequestUtils.parseUrlPath(br);
+            String firstLine = br.readLine();
+            Map<String, String> header = HttpRequestUtils.parseHeader(br);
+            String body = IOUtils.readData(br, Integer.parseInt(Optional.ofNullable(header.get("Content-Length")).orElse("0")));
+
+            String urlPath = firstLine.split(" ")[1];
 
             DataOutputStream dos = new DataOutputStream(out);
 
-            byte[] body;
+            byte[] responseBody;
             if ("/".equals(urlPath)) {
-                body = "Hello World".getBytes();
-            } else if (StringUtils.startsWith(urlPath, "/user/create")) {
-                userService.register(HttpRequestUtils.parseQueryString(StringUtils.remove(urlPath, "/user/create?")));
-                body = Files.readAllBytes(new File("./webapp/index.html").toPath());
+                responseBody = "Hello World".getBytes();
+            } else if ("/user/create".equals(urlPath)) {
+                userService.register(HttpRequestUtils.parseQueryString(body));
+                responseBody = Files.readAllBytes(new File("./webapp/index.html").toPath());
             } else {
-                body = Files.readAllBytes(new File("./webapp" + urlPath).toPath());
+                responseBody = Files.readAllBytes(new File("./webapp" + urlPath).toPath());
             }
 
-            response200Header(dos, body.length);
-            responseBody(dos, body);
+            response200Header(dos, responseBody.length);
+            responseBody(dos, responseBody);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
