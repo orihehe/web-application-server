@@ -1,7 +1,9 @@
 package webserver;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import service.UserService;
 import util.HttpRequestUtils;
 
 import java.io.*;
@@ -12,9 +14,11 @@ public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
     private Socket connection;
+    private UserService userService;
 
     public RequestHandler(Socket connectionSocket) {
         this.connection = connectionSocket;
+        this.userService = new UserService();
     }
 
     public void run() {
@@ -32,6 +36,9 @@ public class RequestHandler extends Thread {
             byte[] body;
             if ("/".equals(urlPath)) {
                 body = "Hello World".getBytes();
+            } else if (StringUtils.startsWith(urlPath, "/user/create")) {
+                userService.register(HttpRequestUtils.parseQueryString(StringUtils.remove(urlPath, "/user/create?")));
+                body = Files.readAllBytes(new File("./webapp/index.html").toPath());
             } else {
                 body = Files.readAllBytes(new File("./webapp" + urlPath).toPath());
             }
