@@ -1,13 +1,11 @@
 package service;
 
+import db.DataBase;
 import model.User;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class UserService {
-
-    private Map<String, User> users = new HashMap<>();
 
     public void register(Map<String, String> userInfo) {
         String id = userInfo.get("userId");
@@ -16,7 +14,18 @@ public class UserService {
                 userInfo.get("name"),
                 userInfo.get("email"));
 
-        System.out.println(user.toString());
-        users.put(id, user);
+        DataBase.addUser(user);
+    }
+
+    public boolean isLoginSuccessful(Map<String, String> loginInfo) {
+        String id = loginInfo.get("userId");
+        String password = loginInfo.get("password");
+
+        User user = DataBase.findUserById(id);
+        return user != null && user.getPassword().equals(password);
+    }
+
+    public boolean isLogined(Map<String, String> cookies) {
+        return "true".equals(cookies.get("logined"));
     }
 }
