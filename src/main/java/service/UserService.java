@@ -24,4 +24,8 @@ public class UserService {
         User user = DataBase.findUserById(id);
         return user != null && user.getPassword().equals(password);
     }
+
+    public boolean isLogined(Map<String, String> cookies) {
+        return "true".equals(cookies.get("logined"));
+    }
 }
