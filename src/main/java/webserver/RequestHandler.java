@@ -75,6 +75,8 @@ public class RequestHandler extends Thread {
                 response200Header(dos, responseBody.length);
             }
 
+
+            setContentTypeAtHeader(dos, urlPath);
 //            response200Header(dos, responseBody.length);
             responseBody(dos, responseBody);
         } catch (Exception e) {
@@ -85,7 +87,6 @@ public class RequestHandler extends Thread {
     private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
@@ -95,8 +96,19 @@ public class RequestHandler extends Thread {
     private void response302Header(DataOutputStream dos, String location) {
         try {
             dos.writeBytes("HTTP/1.1 302 Found \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Location: " + location + "\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void setContentTypeAtHeader(DataOutputStream dos, String urlPath) {
+        try {
+            if (StringUtils.endsWith(urlPath, ".css")) {
+                dos.writeBytes("Content-Type: text/css\r\n");
+            } else {
+                dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            }
         } catch (IOException e) {
             log.error(e.getMessage());
         }
