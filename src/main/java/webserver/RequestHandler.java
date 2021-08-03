@@ -10,6 +10,7 @@ import util.IOUtils;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -47,7 +48,23 @@ public class RequestHandler extends Thread {
             } else if ("/user/create".equals(urlPath)) {
                 userService.register(HttpRequestUtils.parseQueryString(body));
                 responseBody = Files.readAllBytes(new File("./webapp/index.html").toPath());
-                response302Header(dos, responseBody.length, "http://localhost:8080/index.html");
+                response302Header(dos, responseBody.length, "/index.html");
+            } else if ("/user/login".equals(urlPath)) {
+                if (userService.isLoginSuccessful(HttpRequestUtils.parseQueryString(body))) {
+                    responseBody = Files.readAllBytes(new File("./webapp/index.html").toPath());
+                    response200Header(dos, responseBody.length);
+                    response302Header(dos, responseBody.length, "/index.html");
+                    setCookieAtHeader(dos, new HashMap() {{
+                        put("logined", "true");
+                    }});
+                } else {
+                    responseBody = Files.readAllBytes(new File("./webapp/user/login_failed.html").toPath());
+                    response200Header(dos, responseBody.length);
+                    response302Header(dos, responseBody.length, "/user/login_failed.html");
+                    setCookieAtHeader(dos, new HashMap() {{
+                        put("logined", "false");
+                    }});
+                }
             } else {
                 responseBody = Files.readAllBytes(new File("./webapp" + urlPath).toPath());
                 response200Header(dos, responseBody.length);
@@ -65,7 +82,6 @@ public class RequestHandler extends Thread {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
-            dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -77,7 +93,16 @@ public class RequestHandler extends Thread {
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("Location: " + location + "\r\n");
-            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void setCookieAtHeader(DataOutputStream dos, Map<String, String> cookies) {
+        try {
+            for (Map.Entry<String, String> entry : cookies.entrySet()) {
+                dos.writeBytes(String.format("Set-Cookie: %s=%s\r\n", entry.getKey(), entry.getValue()));
+            }
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -85,6 +110,7 @@ public class RequestHandler extends Thread {
 
     private void responseBody(DataOutputStream dos, byte[] body) {
         try {
+            dos.writeBytes("\r\n");
             dos.write(body, 0, body.length);
             dos.flush();
         } catch (IOException e) {
